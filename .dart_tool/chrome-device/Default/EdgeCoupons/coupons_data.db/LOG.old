@@ -1,0 +1,5 @@
+2026/04/09-11:43:37.932 9a90 Creating DB C:\Users\ELKANA~1\AppData\Local\Temp\flutter_tools.cdec4fcb\flutter_tools_chrome_device.50cb00d1\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/04/09-11:43:37.965 9a90 Reusing MANIFEST C:\Users\ELKANA~1\AppData\Local\Temp\flutter_tools.cdec4fcb\flutter_tools_chrome_device.50cb00d1\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/04/09-11:44:24.683 234c Level-0 table #5: started
+2026/04/09-11:44:24.687 234c Level-0 table #5: 682116 bytes OK
+2026/04/09-11:44:24.688 234c Delete type=0 #3
