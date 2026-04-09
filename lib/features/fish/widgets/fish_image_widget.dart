@@ -1,11 +1,10 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
 
 class FishImageWidget extends StatelessWidget {
   const FishImageWidget({
     super.key,
-    required this.imagePath,
+    required this.imageUrl,
     this.imageBytes,
     this.width,
     this.height,
@@ -13,7 +12,7 @@ class FishImageWidget extends StatelessWidget {
     this.borderRadius,
   });
 
-  final String imagePath;
+  final String imageUrl;
   final Uint8List? imageBytes;
   final double? width;
   final double? height;
@@ -24,26 +23,25 @@ class FishImageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    Widget image;
-    if (imageBytes != null) {
-      image = Image.memory(
-        imageBytes!,
-        width: width,
-        height: height,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) =>
-            _ImageFallback(width: width, height: height),
-      );
-    } else {
-      image = Image.asset(
-        imagePath,
-        width: width,
-        height: height,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) =>
-            _ImageFallback(width: width, height: height),
-      );
-    }
+    final image = imageBytes != null
+        ? Image.memory(
+            imageBytes!,
+            width: width,
+            height: height,
+            fit: fit,
+            errorBuilder: (context, error, stackTrace) =>
+                _ImageFallback(width: width, height: height),
+          )
+        : imageUrl.isNotEmpty
+        ? Image.network(
+            imageUrl,
+            width: width,
+            height: height,
+            fit: fit,
+            errorBuilder: (context, error, stackTrace) =>
+                _ImageFallback(width: width, height: height),
+          )
+        : _ImageFallback(width: width, height: height);
 
     if (borderRadius == null) return image;
 

@@ -107,10 +107,8 @@ class _FishBody extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Pilih salah satu ikan untuk melihat detail, mengubah data, atau menghapusnya.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            'Data diambil dari API fish. Buka salah satu item untuk melihat detail, edit, atau hapus.',
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
           ...fish.map((item) => _FishItemCard(fish: item, onOpen: onOpen)),
@@ -137,7 +135,7 @@ class _FishItemCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => onOpen(fish.id),
+        onTap: () => onOpen(fish.id!),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -146,7 +144,7 @@ class _FishItemCard extends StatelessWidget {
               Stack(
                 children: [
                   FishImageWidget(
-                    imagePath: fish.imagePath,
+                    imageUrl: fish.gambar,
                     imageBytes: fish.imageBytes,
                     width: double.infinity,
                     height: 180,
@@ -175,18 +173,13 @@ class _FishItemCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              fish.nama,
+                              fish.name,
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
                             ),
-                          ),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 16,
                           ),
                         ],
                       ),
@@ -200,18 +193,22 @@ class _FishItemCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _FishMetaChip(
-                    icon: Icons.water_drop_outlined,
-                    label: fish.habitat,
+                    icon: Icons.location_on_outlined,
+                    label: fish.origin,
                   ),
-                  const _FishMetaChip(
-                    icon: Icons.edit_note_outlined,
-                    label: 'Bisa diubah',
+                  _FishMetaChip(
+                    icon: Icons.payments_outlined,
+                    label: 'Rp ${fish.price}',
+                  ),
+                  _FishMetaChip(
+                    icon: Icons.stacked_line_chart_outlined,
+                    label: fish.difficulty,
                   ),
                 ],
               ),
               const SizedBox(height: 10),
               Text(
-                fish.deskripsi,
+                fish.description,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(height: 1.45),
@@ -267,7 +264,23 @@ class _FishHeroHeader extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _FishStatBadge(totalFish: totalFish),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$totalFish koleksi',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -280,40 +293,13 @@ class _FishHeroHeader extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Kelola data ikan dengan tampilan yang lebih visual. Tambah gambar, edit informasi, dan buka detail setiap koleksi langsung dari halaman ini.',
+            'Sekarang fish memakai API backend, sama seperti plants.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurface,
               height: 1.45,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FishStatBadge extends StatelessWidget {
-  const _FishStatBadge({required this.totalFish});
-
-  final int totalFish;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        '$totalFish koleksi',
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: colorScheme.primary,
-        ),
       ),
     );
   }

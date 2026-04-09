@@ -1,42 +1,89 @@
+import '../../core/constants/api_constants.dart';
 import 'dart:typed_data';
 
 class FishModel {
   const FishModel({
-    required this.id,
-    required this.nama,
-    required this.imagePath,
+    this.id,
+    required this.name,
+    this.gambar = '',
+    this.pathGambar = '',
     this.imageBytes,
-    required this.deskripsi,
-    required this.habitat,
-    required this.makanan,
+    required this.price,
+    required this.description,
+    required this.origin,
+    required this.size,
+    required this.lifespan,
+    required this.difficulty,
   });
 
-  final String id;
-  final String nama;
-  final String imagePath;
+  final String? id;
+  final String name;
+  final String gambar;
+  final String pathGambar;
   final Uint8List? imageBytes;
-  final String deskripsi;
-  final String habitat;
-  final String makanan;
+  final String price;
+  final String description;
+  final String origin;
+  final String size;
+  final String lifespan;
+  final String difficulty;
+
+  factory FishModel.fromJson(Map<String, dynamic> json) {
+    final pathGambar = json['pathGambar'] as String? ?? '';
+    final fileName = pathGambar.split('/').isNotEmpty
+        ? pathGambar.split('/').last
+        : '';
+
+    return FishModel(
+      id: json['id'] as String?,
+      name: json['name'] as String? ?? '',
+      gambar: fileName.isNotEmpty
+          ? '${ApiConstants.baseUrl}/static/fish/$fileName'
+          : '',
+      pathGambar: pathGambar,
+      imageBytes: null,
+      price: json['price'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      origin: json['origin'] as String? ?? '',
+      size: json['size'] as String? ?? '',
+      lifespan: json['lifespan'] as String? ?? '',
+      difficulty: json['difficulty'] as String? ?? '',
+    );
+  }
 
   FishModel copyWith({
     String? id,
-    String? nama,
-    String? imagePath,
+    String? name,
+    String? gambar,
+    String? pathGambar,
     Uint8List? imageBytes,
-    bool clearImageBytes = false,
-    String? deskripsi,
-    String? habitat,
-    String? makanan,
+    String? price,
+    String? description,
+    String? origin,
+    String? size,
+    String? lifespan,
+    String? difficulty,
   }) {
     return FishModel(
       id: id ?? this.id,
-      nama: nama ?? this.nama,
-      imagePath: imagePath ?? this.imagePath,
-      imageBytes: clearImageBytes ? null : imageBytes ?? this.imageBytes,
-      deskripsi: deskripsi ?? this.deskripsi,
-      habitat: habitat ?? this.habitat,
-      makanan: makanan ?? this.makanan,
+      name: name ?? this.name,
+      gambar: gambar ?? this.gambar,
+      pathGambar: pathGambar ?? this.pathGambar,
+      imageBytes: imageBytes ?? this.imageBytes,
+      price: price ?? this.price,
+      description: description ?? this.description,
+      origin: origin ?? this.origin,
+      size: size ?? this.size,
+      lifespan: lifespan ?? this.lifespan,
+      difficulty: difficulty ?? this.difficulty,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FishModel && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

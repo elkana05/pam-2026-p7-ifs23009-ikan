@@ -108,7 +108,7 @@ class _FishDetailScreenState extends State<FishDetailScreen> {
 
         return Scaffold(
           appBar: TopAppBarWidget(
-            title: fish.nama,
+            title: fish.name,
             showBackButton: true,
             fallbackRoute: RouteConstants.fish,
             menuItems: [
@@ -117,7 +117,7 @@ class _FishDetailScreenState extends State<FishDetailScreen> {
                 icon: Icons.edit_outlined,
                 onTap: () async {
                   final edited = await context.push<bool>(
-                    RouteConstants.fishEdit(fish.id),
+                    RouteConstants.fishEdit(fish.id!),
                   );
                   if (edited == true && context.mounted) {
                     provider.loadFishById(widget.fishId);
@@ -172,7 +172,7 @@ class _FishDetailBody extends StatelessWidget {
                     top: Radius.circular(24),
                   ),
                   child: FishImageWidget(
-                    imagePath: fish.imagePath,
+                    imageUrl: fish.gambar,
                     imageBytes: fish.imageBytes,
                     width: double.infinity,
                     height: 260,
@@ -184,35 +184,16 @@ class _FishDetailBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        fish.nama,
+                        fish.name,
                         style: Theme.of(context).textTheme.headlineLarge
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Informasi lengkap ikan hias dan karakteristik utamanya.',
+                        'Informasi lengkap fish dari API backend.',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: const [
-                          _InfoChip(
-                            icon: Icons.photo_library_outlined,
-                            label: 'Galeri Asset',
-                          ),
-                          _InfoChip(
-                            icon: Icons.edit_note_outlined,
-                            label: 'CRUD Aktif',
-                          ),
-                          _InfoChip(
-                            icon: Icons.water_outlined,
-                            label: 'Topik Ikan',
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -223,20 +204,38 @@ class _FishDetailBody extends StatelessWidget {
           const SizedBox(height: 16),
           _InfoCard(
             title: 'Deskripsi',
-            content: fish.deskripsi,
+            content: fish.description,
             icon: Icons.description_outlined,
           ),
           const SizedBox(height: 16),
           _InfoCard(
-            title: 'Habitat',
-            content: fish.habitat,
-            icon: Icons.water_drop_outlined,
+            title: 'Harga',
+            content: fish.price,
+            icon: Icons.payments_outlined,
           ),
           const SizedBox(height: 16),
           _InfoCard(
-            title: 'Makanan',
-            content: fish.makanan,
-            icon: Icons.restaurant_outlined,
+            title: 'Asal',
+            content: fish.origin,
+            icon: Icons.location_on_outlined,
+          ),
+          const SizedBox(height: 16),
+          _InfoCard(
+            title: 'Ukuran',
+            content: fish.size,
+            icon: Icons.straighten_outlined,
+          ),
+          const SizedBox(height: 16),
+          _InfoCard(
+            title: 'Usia Hidup',
+            content: fish.lifespan,
+            icon: Icons.schedule_outlined,
+          ),
+          const SizedBox(height: 16),
+          _InfoCard(
+            title: 'Tingkat Kesulitan',
+            content: fish.difficulty,
+            icon: Icons.stacked_line_chart_outlined,
           ),
         ],
       ),
@@ -295,40 +294,6 @@ class _InfoCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: colorScheme.primary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ],
       ),
     );
   }
