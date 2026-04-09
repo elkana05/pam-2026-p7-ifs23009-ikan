@@ -10,6 +10,7 @@ import '../../core/constants/route_constants.dart';
 import '../../data/models/fish_model.dart';
 import '../../providers/fish_provider.dart';
 import '../../shared/widgets/top_app_bar_widget.dart';
+import 'widgets/fish_image_widget.dart';
 
 class FishFormScreen extends StatefulWidget {
   const FishFormScreen.add({super.key})
@@ -30,22 +31,17 @@ enum FishFormMode { add, edit }
 
 class _FishFormScreenState extends State<FishFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _originController = TextEditingController();
-  final _sizeController = TextEditingController();
-  final _lifespanController = TextEditingController();
-  final _difficultyController = TextEditingController();
-
-  File? _imageFile;
-  Uint8List? _imageBytes;
-  String _imageFilename = 'image.jpg';
-  bool _isLoading = false;
+  final _namaController = TextEditingController();
+  final _deskripsiController = TextEditingController();
+  final _habitatController = TextEditingController();
+  final _makananController = TextEditingController();
+  String _selectedImagePath = fishImageOptions.first.path;
+  Uint8List? _selectedImageBytes;
+  File? _selectedImageFile;
+  bool _isSaving = false;
   bool _isInitialized = false;
 
   bool get _isEdit => widget.mode == FishFormMode.edit;
-  bool get _hasImage => _imageBytes != null;
 
   @override
   void initState() {
@@ -59,25 +55,23 @@ class _FishFormScreenState extends State<FishFormScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _descriptionController.dispose();
-    _originController.dispose();
-    _sizeController.dispose();
-    _lifespanController.dispose();
-    _difficultyController.dispose();
+    _namaController.dispose();
+    _deskripsiController.dispose();
+    _habitatController.dispose();
+    _makananController.dispose();
     super.dispose();
   }
 
   void _populateForm(FishModel fish) {
     if (_isInitialized) return;
-    _nameController.text = fish.name;
-    _priceController.text = fish.price;
-    _descriptionController.text = fish.description;
-    _originController.text = fish.origin;
-    _sizeController.text = fish.size;
-    _lifespanController.text = fish.lifespan;
-    _difficultyController.text = fish.difficulty;
+    _namaController.text = fish.nama;
+    _deskripsiController.text = fish.deskripsi;
+    _habitatController.text = fish.habitat;
+    _makananController.text = fish.makanan;
+    _selectedImagePath = fish.imagePath.isNotEmpty
+        ? fish.imagePath
+        : fishImageOptions.first.path;
+    _selectedImageBytes = fish.imageBytes;
     _isInitialized = true;
   }
 
@@ -92,9 +86,8 @@ class _FishFormScreenState extends State<FishFormScreen> {
 
     final bytes = await picked.readAsBytes();
     setState(() {
-      _imageBytes = bytes;
-      _imageFilename = picked.name;
-      _imageFile = kIsWeb ? null : File(picked.path);
+      _selectedImageBytes = bytes;
+      _selectedImageFile = kIsWeb ? null : File(picked.path);
     });
   }
 
@@ -128,55 +121,40 @@ class _FishFormScreenState extends State<FishFormScreen> {
     );
   }
 
-  Future<void> _submit(FishModel? original) async {
+  Future<void> _submit(FishProvider provider) async {
     if (!_formKey.currentState!.validate()) return;
-    if (!_isEdit && !_hasImage) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih gambar terlebih dahulu.')),
-      );
-      return;
-    }
 
-    setState(() => _isLoading = true);
-    final provider = context.read<FishProvider>();
+    setState(() => _isSaving = true);
 
     final success = _isEdit
         ? await provider.editFish(
-            id: original!.id!,
-            name: _nameController.text.trim(),
-            price: _priceController.text.trim(),
-            description: _descriptionController.text.trim(),
-            origin: _originController.text.trim(),
-            size: _sizeController.text.trim(),
-            lifespan: _lifespanController.text.trim(),
-            difficulty: _difficultyController.text.trim(),
-            imageFile: _imageFile,
-            imageBytes: _imageBytes,
-            imageFilename: _imageFilename,
+            id: widget.fishId!,
+            nama: _namaController.text.trim(),
+            imagePath: _selectedImagePath,
+            imageBytes: _selectedImageBytes,
+            deskripsi: _deskripsiController.text.trim(),
+            habitat: _habitatController.text.trim(),
+            makanan: _makananController.text.trim(),
           )
         : await provider.addFish(
-            name: _nameController.text.trim(),
-            price: _priceController.text.trim(),
-            description: _descriptionController.text.trim(),
-            origin: _originController.text.trim(),
-            size: _sizeController.text.trim(),
-            lifespan: _lifespanController.text.trim(),
-            difficulty: _difficultyController.text.trim(),
-            imageFile: _imageFile,
-            imageBytes: _imageBytes,
-            imageFilename: _imageFilename,
+            nama: _namaController.text.trim(),
+            imagePath: _selectedImagePath,
+            imageBytes: _selectedImageBytes,
+            deskripsi: _deskripsiController.text.trim(),
+            habitat: _habitatController.text.trim(),
+            makanan: _makananController.text.trim(),
           );
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
+    setState(() => _isSaving = false);
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             _isEdit
-                ? 'Fish berhasil diperbarui.'
-                : 'Fish berhasil ditambahkan.',
+                ? 'Data ikan berhasil diperbarui.'
+                : 'Data ikan berhasil ditambahkan.',
           ),
         ),
       );
@@ -193,8 +171,6 @@ class _FishFormScreenState extends State<FishFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Consumer<FishProvider>(
       builder: (context, provider, _) {
         final fish = provider.selectedFish;
@@ -202,14 +178,21 @@ class _FishFormScreenState extends State<FishFormScreen> {
           _populateForm(fish);
         }
 
+        final showLoading =
+            _isEdit && !_isInitialized && provider.status == FishStatus.loading;
+        final showError =
+            _isEdit && provider.status == FishStatus.error && fish == null;
+
         return Scaffold(
           appBar: TopAppBarWidget(
-            title: _isEdit ? 'Edit Fish' : 'Tambah Fish',
+            title: _isEdit ? 'Edit Ikan' : 'Tambah Ikan',
             showBackButton: true,
             fallbackRoute: RouteConstants.fish,
           ),
-          body: _isEdit && fish == null
+          body: showLoading
               ? const Center(child: CircularProgressIndicator())
+              : showError
+              ? Center(child: Text(provider.errorMessage))
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Form(
@@ -217,99 +200,58 @@ class _FishFormScreenState extends State<FishFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        GestureDetector(
-                          onTap: _showImageSourceSheet,
-                          child: Container(
-                            height: 180,
-                            decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: colorScheme.outline),
-                            ),
-                            child: _hasImage
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.memory(
-                                      _imageBytes!,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                    ),
-                                  )
-                                : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.add_photo_alternate_outlined,
-                                        size: 48,
-                                        color: colorScheme.primary,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        _isEdit
-                                            ? 'Ketuk untuk ganti gambar (opsional)'
-                                            : 'Ketuk untuk memilih gambar *',
-                                        style: TextStyle(
-                                          color: colorScheme.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
+                        _FormHero(isEdit: _isEdit),
+                        const SizedBox(height: 16),
+                        _FormSection(
+                          title: 'Gambar ikan',
+                          subtitle:
+                              'Upload gambar yang paling sesuai agar data ikan terlihat menarik.',
+                          child: _buildImageSelector(),
                         ),
                         const SizedBox(height: 20),
-                        _buildField(
-                          controller: _nameController,
-                          label: 'Nama Fish',
-                          hint: 'Contoh: Arwana Platinum',
-                          icon: Icons.set_meal_outlined,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildField(
-                          controller: _priceController,
-                          label: 'Harga',
-                          hint: 'Contoh: 2500000',
-                          icon: Icons.payments_outlined,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildField(
-                          controller: _descriptionController,
-                          label: 'Deskripsi',
-                          hint: 'Deskripsikan fish ini...',
-                          icon: Icons.description_outlined,
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildField(
-                          controller: _originController,
-                          label: 'Asal',
-                          hint: 'Contoh: Jepang',
-                          icon: Icons.location_on_outlined,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildField(
-                          controller: _sizeController,
-                          label: 'Ukuran',
-                          hint: 'Contoh: 20 cm',
-                          icon: Icons.straighten_outlined,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildField(
-                          controller: _lifespanController,
-                          label: 'Usia Hidup',
-                          hint: 'Contoh: 5 tahun',
-                          icon: Icons.schedule_outlined,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildField(
-                          controller: _difficultyController,
-                          label: 'Tingkat Kesulitan',
-                          hint: 'Contoh: Sulit',
-                          icon: Icons.stacked_line_chart_outlined,
+                        _FormSection(
+                          title: 'Informasi utama',
+                          subtitle:
+                              'Isi nama, deskripsi, habitat, dan makanan ikan secara lengkap.',
+                          child: Column(
+                            children: [
+                              _buildField(
+                                controller: _namaController,
+                                label: 'Nama Ikan',
+                                hint: 'Contoh: Arwana',
+                                icon: Icons.set_meal_outlined,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                controller: _deskripsiController,
+                                label: 'Deskripsi',
+                                hint: 'Deskripsikan ikan ini...',
+                                icon: Icons.description_outlined,
+                                maxLines: 3,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                controller: _habitatController,
+                                label: 'Habitat',
+                                hint: 'Contoh: Sungai air tawar',
+                                icon: Icons.water_outlined,
+                                maxLines: 2,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                controller: _makananController,
+                                label: 'Makanan',
+                                hint: 'Contoh: Serangga dan ikan kecil',
+                                icon: Icons.restaurant_outlined,
+                                maxLines: 2,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 24),
                         FilledButton.icon(
-                          onPressed: _isLoading ? null : () => _submit(fish),
-                          icon: _isLoading
+                          onPressed: _isSaving ? null : () => _submit(provider),
+                          icon: _isSaving
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
@@ -318,7 +260,7 @@ class _FishFormScreenState extends State<FishFormScreen> {
                                   ),
                                 )
                               : const Icon(Icons.save_outlined),
-                          label: Text(_isLoading ? 'Menyimpan...' : 'Simpan'),
+                          label: Text(_isSaving ? 'Menyimpan...' : 'Simpan'),
                         ),
                       ],
                     ),
@@ -326,6 +268,98 @@ class _FishFormScreenState extends State<FishFormScreen> {
                 ),
         );
       },
+    );
+  }
+
+  Widget _buildImageSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+          onTap: _showImageSourceSheet,
+          child: Stack(
+            children: [
+              FishImageWidget(
+                imagePath: _selectedImagePath,
+                imageBytes: _selectedImageBytes,
+                height: 200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              Positioned(
+                right: 12,
+                top: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add_a_photo_outlined,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Ganti Gambar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _showImageSourceSheet,
+          icon: const Icon(Icons.upload_outlined),
+          label: Text(
+            _selectedImageBytes != null
+                ? 'Pilih Ulang Gambar'
+                : 'Upload Gambar Sendiri',
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.tips_and_updates_outlined, color: colorScheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Gunakan foto yang jelas agar tampilan daftar dan detail ikan terlihat lebih rapi.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_selectedImageBytes != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Menggunakan gambar baru${_selectedImageFile != null ? ' dari perangkat' : ''}.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
     );
   }
 
@@ -354,3 +388,137 @@ class _FishFormScreenState extends State<FishFormScreen> {
     );
   }
 }
+
+class _FormHero extends StatelessWidget {
+  const _FormHero({required this.isEdit});
+
+  final bool isEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.secondaryContainer,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              isEdit ? Icons.edit_outlined : Icons.add_circle_outline,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEdit ? 'Perbarui data ikan' : 'Tambah data ikan baru',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isEdit
+                      ? 'Ubah informasi dan gambar agar koleksi ikan tetap rapi.'
+                      : 'Lengkapi gambar dan informasi agar koleksi ikan terlihat menarik.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FormSection extends StatelessWidget {
+  const _FormSection({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 14),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class FishImageOption {
+  const FishImageOption({required this.label, required this.path});
+
+  final String label;
+  final String path;
+}
+
+const List<FishImageOption> fishImageOptions = [
+  FishImageOption(label: 'Arapaima', path: 'assets/images/arapaima.jpg'),
+  FishImageOption(label: 'Arwana', path: 'assets/images/arwana.jpg'),
+  FishImageOption(label: 'Discus Fish', path: 'assets/images/discusfish.jpg'),
+  FishImageOption(
+    label: 'Flowerhorn Cichlid',
+    path: 'assets/images/flowerhorncichlid.jpg',
+  ),
+  FishImageOption(
+    label: 'Golden Basslet',
+    path: 'assets/images/goldenbasslet.jpg',
+  ),
+  FishImageOption(
+    label: 'Clarion Angelfish',
+    path: 'assets/images/clarionangelfish.jpg',
+  ),
+];
